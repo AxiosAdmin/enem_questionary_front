@@ -18,13 +18,13 @@ export const hasStrongPasswordRequirements = (password) => {
   );
 };
 
-export const getPasswordValidationMessage = (password, t) => {
+export const getPasswordValidationMessage = (password) => {
   if (!password) {
     return "";
   }
 
   if (!hasStrongPasswordRequirements(password)) {
-    return t("password.requirements");
+    return "A senha deve ter pelo menos 8 caracteres e incluir uma letra maiuscula, uma minuscula, um numero e um caractere especial.";
   }
 
   return "";

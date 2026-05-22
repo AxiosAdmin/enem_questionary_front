@@ -1,11 +1,20 @@
 import axios from "axios";
+import { getStoredToken, getStoredTokenType } from "./auth";
 
 export const fetchApi = async (endpoint, body = null, method = "GET") => {
   const baseUrl = process.env.REACT_APP_BASE_API_URL || "";
+  const token = getStoredToken();
+  const tokenType = getStoredTokenType();
   const config = {
     method,
     url: `${baseUrl}${endpoint}`,
   };
+
+  if (token) {
+    config.headers = {
+      Authorization: `${tokenType.charAt(0).toUpperCase()}${tokenType.slice(1)} ${token}`,
+    };
+  }
 
   if (body !== null && ["POST", "PATCH", "PUT"].includes(method)) {
     config.data = body;
