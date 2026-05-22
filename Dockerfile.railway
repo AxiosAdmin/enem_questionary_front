@@ -1,0 +1,27 @@
+# build stage
+FROM node:20 AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY public ./public
+COPY src ./src
+RUN npm run build
+
+# production stage
+FROM node:20
+
+WORKDIR /app
+
+# instalar dependências do server
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# copiar build e server
+COPY --from=build /app/build ./build
+COPY server.js ./server.js
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["node", "server.js"]
