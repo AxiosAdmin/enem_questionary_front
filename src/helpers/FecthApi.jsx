@@ -1,13 +1,23 @@
 import axios from "axios";
 import { getStoredToken, getStoredTokenType } from "./auth";
 
+const getBaseUrl = () => {
+  const runtimeBaseUrl =
+    typeof window !== "undefined"
+      ? window.__APP_CONFIG__?.REACT_APP_BASE_API_URL
+      : "";
+  const envBaseUrl = process.env.REACT_APP_BASE_API_URL || "";
+
+  return (runtimeBaseUrl || envBaseUrl).replace(/\/+$/, "");
+};
+
 export const fetchApi = async (endpoint, body = null, method = "GET") => {
-  const baseUrl = process.env.REACT_APP_BASE_API_URL || "";
+  const baseUrl = getBaseUrl();
   const token = getStoredToken();
   const tokenType = getStoredTokenType();
   const config = {
     method,
-    url: `${baseUrl}${endpoint}`,
+    url: `${baseUrl}/${String(endpoint).replace(/^\/+/, "")}`,
   };
 
   if (token) {
