@@ -5,6 +5,7 @@ const app = express();
 
 app.get("/env-config.js", (req, res) => {
   res.type("application/javascript");
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.send(
     `window.__APP_CONFIG__ = ${JSON.stringify({
       REACT_APP_BASE_API_URL: process.env.REACT_APP_BASE_API_URL || "",
