@@ -1,5 +1,10 @@
 import axios from "axios";
-import { getStoredToken, getStoredTokenType } from "./auth";
+import {
+  clearAuthSession,
+  getStoredToken,
+  getStoredTokenType,
+  notifySessionExpired,
+} from "./auth";
 
 const getBaseUrl = () => {
   const runtimeBaseUrl =
@@ -11,13 +16,39 @@ const getBaseUrl = () => {
   return (runtimeBaseUrl || envBaseUrl).replace(/\/+$/, "");
 };
 
+const isUnauthorizedError = (error) => {
+  const candidateStatusCodes = [
+    error?.response?.status,
+    error?.request?.status,
+    error?.status,
+    error?.response?.data?.status,
+    error?.response?.data?.statusCode,
+  ]
+    .map((value) => Number(value))
+    .filter((value) => !Number.isNaN(value));
+
+  if (candidateStatusCodes.includes(401)) {
+    return true;
+  }
+
+  const message = String(
+    error?.message ||
+      error?.response?.data?.message ||
+      error?.response?.data?.detail ||
+      "",
+  ).toLowerCase();
+
+  return message.includes("401") || message.includes("unauthorized");
+};
+
 export const fetchApi = async (endpoint, body = null, method = "GET") => {
   const baseUrl = getBaseUrl();
+  const normalizedEndpoint = String(endpoint).replace(/^\/+/, "");
   const token = getStoredToken();
   const tokenType = getStoredTokenType();
   const config = {
     method,
-    url: `${baseUrl}/${String(endpoint).replace(/^\/+/, "")}`,
+    url: `${baseUrl}/${normalizedEndpoint}`,
   };
 
   if (token) {
@@ -30,8 +61,22 @@ export const fetchApi = async (endpoint, body = null, method = "GET") => {
     config.data = body;
   }
 
-  const response = await axios(config);
-  return response.data;
+  try {
+    const response = await axios(config);
+    return response.data;
+  } catch (error) {
+    const shouldExpireSession =
+      normalizedEndpoint !== "login" &&
+      Boolean(token) &&
+      isUnauthorizedError(error);
+
+    if (shouldExpireSession) {
+      clearAuthSession();
+      notifySessionExpired();
+    }
+
+    throw error;
+  }
 };
 
 // Convenience methods

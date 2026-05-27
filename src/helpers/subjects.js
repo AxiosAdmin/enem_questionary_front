@@ -3,8 +3,8 @@ export const SUBJECTS = [
     id: "languages",
     title: "Linguagens",
     description: "Leitura, gramatica, literatura e interpretacao de texto.",
-    topicsEndpoint: "ai/lenguages/topics",
-    questionEndpoint: "ai/lenguages",
+    topicsEndpoint: "ai/languages/topics",
+    questionEndpoint: "ai/languages",
     accent: "var(--subject-languages)",
   },
   {
@@ -32,3 +32,6 @@ export const SUBJECTS = [
     accent: "var(--subject-human)",
   },
 ];
+
+export const getSubjectById = (subjectId) =>
+  SUBJECTS.find((subject) => subject.id === subjectId) || null;

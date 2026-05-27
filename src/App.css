@@ -10,8 +10,6 @@
   --text-secondary: #b6c2d0;
   --accent: #f6bd60;
   --accent-strong: #ffd166;
-  --eyebrow-background: rgba(246, 189, 96, 0.14);
-  --eyebrow-text: #f6bd60;
   --button-primary-text: #10212f;
   --button-secondary-background: rgba(255, 255, 255, 0.08);
   --button-secondary-text: #f5f7fb;
@@ -44,8 +42,6 @@
   --text-secondary: #4b5563;
   --accent: #2563eb;
   --accent-strong: #1d4ed8;
-  --eyebrow-background: #e0f2fe;
-  --eyebrow-text: #0369a1;
   --button-primary-text: #ffffff;
   --button-secondary-background: #ffffff;
   --button-secondary-text: #111827;
@@ -66,6 +62,21 @@
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
+}
+
+.session-expired-flag {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 20;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border: 1px solid var(--error-border);
+  border-radius: 14px;
+  background: var(--error-background);
+  color: var(--text-primary);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px);
 }
 
 .screen-card {
@@ -91,16 +102,6 @@
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
-}
-
-.eyebrow {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--eyebrow-background);
-  color: var(--eyebrow-text);
-  font-size: 0.78rem;
-  font-weight: 700;
 }
 
 .toolbar {
@@ -340,6 +341,10 @@
   color: var(--error-text);
 }
 
+.status-text--success {
+  color: var(--text-primary);
+}
+
 .login-card {
   width: 100%;
   max-width: 520px;
@@ -379,6 +384,21 @@
   width: 100%;
 }
 
+.auth-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.auth-switch span {
+  color: var(--text-secondary);
+}
+
 .fade-in {
   animation: fadeInUp 180ms ease;
 }
@@ -398,6 +418,11 @@
 @media (max-width: 640px) {
   .App {
     padding: 16px;
+  }
+
+  .session-expired-flag {
+    top: 16px;
+    right: 16px;
   }
 
   .screen-card {

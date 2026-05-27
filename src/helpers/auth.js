@@ -1,6 +1,9 @@
 export const TOKEN_STORAGE_KEY = "token";
 export const TOKEN_TYPE_STORAGE_KEY = "token_type";
 export const AUTH_USER_STORAGE_KEY = "auth_user";
+export const SESSION_EXPIRED_EVENT = "auth:session-expired";
+
+let sessionExpiredHandler = null;
 
 export const getStoredToken = () => {
   try {
@@ -41,6 +44,22 @@ export const clearAuthSession = () => {
   localStorage.removeItem(AUTH_USER_STORAGE_KEY);
 };
 
+export const notifySessionExpired = () => {
+  if (typeof sessionExpiredHandler === "function") {
+    sessionExpiredHandler();
+  }
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+};
+
+export const registerSessionExpiredHandler = (handler) => {
+  sessionExpiredHandler = handler;
+};
+
 export const getStoredAuthUser = () => {
   try {
     const rawUser = localStorage.getItem(AUTH_USER_STORAGE_KEY);
@@ -50,4 +69,3 @@ export const getStoredAuthUser = () => {
     return null;
   }
 };
-

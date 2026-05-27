@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import Questions from "./pages/Questions";
+import AppRouter from "./router/AppRouter";
 
 const THEME_STORAGE_KEY = "app_theme";
 
@@ -25,7 +25,7 @@ function App() {
 
   return (
     <div className={`App theme-${theme}`}>
-      <Questions theme={theme} onToggleTheme={handleToggleTheme} />
+      <AppRouter theme={theme} onToggleTheme={handleToggleTheme} />
     </div>
   );
 }
