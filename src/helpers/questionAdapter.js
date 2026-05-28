@@ -51,6 +51,18 @@ const getPayload = (response) => {
 const getQuestionText = (payload) =>
   pickFirst(payload, ["question", "statement", "prompt", "enunciation"]);
 
+const normalizeString = (value) => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  return String(value);
+};
+
 const getOptionText = (payload, label) => {
   const lowerLabel = label.toLowerCase();
 
@@ -163,6 +175,50 @@ const resolveCorrectOptionLabel = (options, payload) => {
   return flaggedOption?.label || "";
 };
 
+const normalizeSupportMaterial = (material, index) => {
+  const rawData =
+    material?.data && typeof material.data === "object" && !Array.isArray(material.data)
+      ? material.data
+      : {};
+
+  return {
+    id: material?.id || `support-material-${index}`,
+    assetType: normalizeString(material?.asset_type || material?.assetType).toLowerCase(),
+    renderingMode: normalizeString(
+      material?.rendering_mode || material?.renderingMode,
+    ).toLowerCase(),
+    position: normalizeString(material?.position || "before_statement").toLowerCase(),
+    displayOrder: Number(material?.display_order ?? material?.displayOrder ?? index) || index,
+    storageStatus: normalizeString(
+      material?.storage_status || material?.storageStatus || "not_required",
+    ).toLowerCase(),
+    title: normalizeString(material?.title),
+    caption: normalizeString(material?.caption),
+    altText: normalizeString(material?.alt_text || material?.altText),
+    sourceLabel: normalizeString(material?.source_label || material?.sourceLabel),
+    content: normalizeString(material?.content),
+    storageProvider: normalizeString(
+      material?.storage_provider || material?.storageProvider,
+    ),
+    storageKey: normalizeString(material?.storage_key || material?.storageKey),
+    publicUrl: normalizeString(material?.public_url || material?.publicUrl),
+    mimeType: normalizeString(material?.mime_type || material?.mimeType),
+    data: rawData,
+  };
+};
+
+const getSupportMaterials = (payload) => {
+  const rawSupportMaterials = Array.isArray(payload?.support_materials)
+    ? payload.support_materials
+    : Array.isArray(payload?.supportMaterials)
+      ? payload.supportMaterials
+      : [];
+
+  return rawSupportMaterials
+    .map(normalizeSupportMaterial)
+    .sort((first, second) => first.displayOrder - second.displayOrder);
+};
+
 export const normalizeQuestion = (response) => {
   const payload = getPayload(response);
   const question = getQuestionText(payload);
@@ -180,6 +236,6 @@ export const normalizeQuestion = (response) => {
     question,
     options,
     correctOptionLabel: resolveCorrectOptionLabel(options, payload),
+    supportMaterials: getSupportMaterials(payload),
   };
 };
-
