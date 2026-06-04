@@ -28,16 +28,73 @@ const normalizeTopic = (topic) => {
   return "";
 };
 
-export const extractTopics = (response) => {
-  const rawTopics = Array.isArray(response)
-    ? response
-    : Array.isArray(response?.data)
-      ? response.data
-      : Array.isArray(response?.topics)
-        ? response.topics
-        : [];
+const normalizeSubtopic = (subtopic) => {
+  if (typeof subtopic === "string") {
+    return {
+      name: subtopic,
+      description: "",
+    };
+  }
 
-  return rawTopics.map(normalizeTopic).filter(Boolean);
+  if (typeof subtopic === "object" && subtopic !== null) {
+    return {
+      name:
+        subtopic.name ||
+        subtopic.title ||
+        subtopic.subtopic ||
+        subtopic.label ||
+        "",
+      description:
+        subtopic.description ||
+        subtopic.subtopic_description ||
+        subtopic.subtopicDescription ||
+        "",
+    };
+  }
+
+  return {
+    name: "",
+    description: "",
+  };
+};
+
+const getRawTopics = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  if (Array.isArray(response?.topics)) {
+    return response.topics;
+  }
+
+  return [];
+};
+
+export const extractTopicCatalog = (response) =>
+  getRawTopics(response)
+    .map((topicEntry) => {
+      const topic = normalizeTopic(topicEntry);
+      const rawSubtopics = Array.isArray(topicEntry?.subtopics)
+        ? topicEntry.subtopics
+        : Array.isArray(topicEntry?.children)
+          ? topicEntry.children
+          : Array.isArray(topicEntry?.items)
+            ? topicEntry.items
+            : [];
+
+      return {
+        topic,
+        subtopics: rawSubtopics.map(normalizeSubtopic).filter((subtopic) => subtopic.name),
+      };
+    })
+    .filter((topicEntry) => topicEntry.topic);
+
+export const extractTopics = (response) => {
+  return extractTopicCatalog(response).map((topicEntry) => topicEntry.topic);
 };
 
 const getPayload = (response) => {

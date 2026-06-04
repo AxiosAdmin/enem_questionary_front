@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { get } from "../helpers/FecthApi";
-import { extractTopics } from "../helpers/questionAdapter";
+import { extractTopicCatalog } from "../helpers/questionAdapter";
 
-const TopicsMenu = ({ authUser, subject, onBack, onLogout, onSelectTopic }) => {
-  const [topics, setTopics] = useState([]);
+const TopicsMenu = ({
+  authUser,
+  subject,
+  onBack,
+  onLogout,
+  onSelectTopicSelection,
+}) => {
+  const [topicCatalog, setTopicCatalog] = useState([]);
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedSubtopic, setSelectedSubtopic] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -13,6 +21,8 @@ const TopicsMenu = ({ authUser, subject, onBack, onLogout, onSelectTopic }) => {
     const fetchTopics = async () => {
       setIsLoading(true);
       setError("");
+      setSelectedTopic("");
+      setSelectedSubtopic("");
 
       try {
         const data = await get(subject.topicsEndpoint);
@@ -21,13 +31,13 @@ const TopicsMenu = ({ authUser, subject, onBack, onLogout, onSelectTopic }) => {
           return;
         }
 
-        setTopics(extractTopics(data));
+        setTopicCatalog(extractTopicCatalog(data));
       } catch (requestError) {
         if (!isMounted) {
           return;
         }
 
-        setTopics([]);
+        setTopicCatalog([]);
         setError("Nao foi possivel carregar os topicos desta materia.");
       } finally {
         if (isMounted) {
@@ -43,12 +53,36 @@ const TopicsMenu = ({ authUser, subject, onBack, onLogout, onSelectTopic }) => {
     };
   }, [subject]);
 
+  const selectedTopicEntry =
+    topicCatalog.find((topicEntry) => topicEntry.topic === selectedTopic) || null;
+  const subtopics = selectedTopicEntry?.subtopics || [];
+  const selectedSubtopicEntry =
+    subtopics.find((subtopicEntry) => subtopicEntry.name === selectedSubtopic) || null;
+
+  const handleTopicChange = (event) => {
+    setSelectedTopic(event.target.value);
+    setSelectedSubtopic("");
+  };
+
+  const handleStartQuestions = (event) => {
+    event.preventDefault();
+
+    if (!selectedTopic || !selectedSubtopic) {
+      return;
+    }
+
+    onSelectTopicSelection({
+      topic: selectedTopic,
+      subtopic: selectedSubtopic,
+    });
+  };
+
   return (
     <main className="questions-shell">
       <section className="screen-card fade-in">
         <div className="screen-header">
           <h1>Topicos de {subject.title}</h1>
-          <p>Escolha um topico para gerar a proxima questao.</p>
+          <p>Escolha um topico e depois um subtopico para gerar a proxima questao.</p>
         </div>
 
         <div className="toolbar toolbar--between">
@@ -69,22 +103,63 @@ const TopicsMenu = ({ authUser, subject, onBack, onLogout, onSelectTopic }) => {
         {isLoading ? <p className="status-text">Carregando topicos...</p> : null}
         {error ? <p className="status-text status-text--error">{error}</p> : null}
 
-        {!isLoading && !error && topics.length === 0 ? (
+        {!isLoading && !error && topicCatalog.length === 0 ? (
           <p className="status-text">Nenhum topico disponivel para esta materia.</p>
         ) : null}
 
-        <div className="topic-grid">
-          {topics.map((topic) => (
-            <button
-              key={topic}
-              type="button"
-              className="topic-button"
-              onClick={() => onSelectTopic(topic)}
-            >
-              {topic}
-            </button>
-          ))}
-        </div>
+        {!isLoading && !error && topicCatalog.length > 0 ? (
+          <form className="question-form" onSubmit={handleStartQuestions}>
+            <div className="question-form-grid">
+              <label className="form-field">
+                <span>Topico</span>
+                <select value={selectedTopic} onChange={handleTopicChange} required>
+                  <option value="">Selecione um topico</option>
+                  {topicCatalog.map((topicEntry) => (
+                    <option key={topicEntry.topic} value={topicEntry.topic}>
+                      {topicEntry.topic}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="form-field">
+                <span>Subtopico</span>
+                <select
+                  value={selectedSubtopic}
+                  onChange={(event) => setSelectedSubtopic(event.target.value)}
+                  disabled={!selectedTopic || subtopics.length === 0}
+                  required
+                >
+                  <option value="">
+                    {selectedTopic ? "Selecione um subtopico" : "Escolha um topico primeiro"}
+                  </option>
+                  {subtopics.map((subtopicEntry) => (
+                    <option key={subtopicEntry.name} value={subtopicEntry.name}>
+                      {subtopicEntry.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {selectedSubtopicEntry?.description ? (
+              <div className="question-statement">
+                <span className="question-label">Descricao do subtopico</span>
+                <p>{selectedSubtopicEntry.description}</p>
+              </div>
+            ) : null}
+
+            <div className="toolbar">
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={!selectedTopic || !selectedSubtopic}
+              >
+                Gerar questao
+              </button>
+            </div>
+          </form>
+        ) : null}
       </section>
     </main>
   );

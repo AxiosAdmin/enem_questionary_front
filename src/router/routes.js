@@ -1,6 +1,7 @@
 export const LOGIN_ROUTE = "/login";
 export const REGISTER_ROUTE = "/register";
 export const SUBJECTS_ROUTE = "/subjects";
+export const CREATE_QUESTION_ROUTE = "/questions";
 
 const trimTrailingSlash = (pathname) =>
   pathname !== "/" ? pathname.replace(/\/+$/, "") : pathname;
@@ -8,8 +9,8 @@ const trimTrailingSlash = (pathname) =>
 export const buildTopicsRoute = (subjectId) =>
   `/subjects/${encodeURIComponent(subjectId)}/topics`;
 
-export const buildQuestionRoute = (subjectId, topic) =>
-  `/subjects/${encodeURIComponent(subjectId)}/topics/${encodeURIComponent(topic)}/questions`;
+export const buildQuestionRoute = (subjectId, topic, subtopic) =>
+  `/subjects/${encodeURIComponent(subjectId)}/topics/${encodeURIComponent(topic)}/subtopics/${encodeURIComponent(subtopic)}/questions`;
 
 export const matchRoute = (pathname) => {
   const normalizedPathname = trimTrailingSlash(pathname || "/");
@@ -30,6 +31,10 @@ export const matchRoute = (pathname) => {
     return { name: "subjects", params: {} };
   }
 
+  if (normalizedPathname === CREATE_QUESTION_ROUTE) {
+    return { name: "create-question", params: {} };
+  }
+
   const topicsMatch = normalizedPathname.match(/^\/subjects\/([^/]+)\/topics$/);
 
   if (topicsMatch) {
@@ -42,7 +47,7 @@ export const matchRoute = (pathname) => {
   }
 
   const questionMatch = normalizedPathname.match(
-    /^\/subjects\/([^/]+)\/topics\/([^/]+)\/questions$/,
+    /^\/subjects\/([^/]+)\/topics\/([^/]+)\/subtopics\/([^/]+)\/questions$/,
   );
 
   if (questionMatch) {
@@ -51,6 +56,7 @@ export const matchRoute = (pathname) => {
       params: {
         subjectId: decodeURIComponent(questionMatch[1]),
         topic: decodeURIComponent(questionMatch[2]),
+        subtopic: decodeURIComponent(questionMatch[3]),
       },
     };
   }

@@ -288,7 +288,7 @@ const SupportMaterialCard = ({ material }) => (
   </article>
 );
 
-const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
+const Questions = ({ authUser, subject, topic, subtopic, onBack, onLogout }) => {
   const [question, setQuestion] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -301,21 +301,24 @@ const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
     setSelectedOptionLabel("");
   };
 
-  const requestQuestion = async (currentSubject, currentTopic) => {
-    const data = await post(currentSubject.questionEndpoint, { topic: currentTopic });
+  const requestQuestion = async (currentSubject, currentTopic, currentSubtopic) => {
+    const data = await post(currentSubject.questionEndpoint, {
+      topic: currentTopic,
+      subtopic: currentSubtopic,
+    });
     return normalizeQuestion(data);
   };
 
   const handleRequestError = () => {
     setQuestion(null);
-    setError("Nao foi possivel gerar uma questao para este topico.");
+    setError("Nao foi possivel gerar uma questao para este topico e subtopico.");
   };
 
   const handleGenerateAnother = async () => {
     resetQuestionState();
 
     try {
-      const nextQuestion = await requestQuestion(subject, topic);
+      const nextQuestion = await requestQuestion(subject, topic, subtopic);
       setQuestion(nextQuestion);
     } catch (requestError) {
       handleRequestError();
@@ -331,7 +334,7 @@ const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
       resetQuestionState();
 
       try {
-        const nextQuestion = await requestQuestion(subject, topic);
+        const nextQuestion = await requestQuestion(subject, topic, subtopic);
 
         if (!isMounted) {
           return;
@@ -356,7 +359,7 @@ const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
     return () => {
       isMounted = false;
     };
-  }, [subject, topic]);
+  }, [subject, subtopic, topic]);
 
   const hasAnswered = Boolean(selectedOptionLabel);
   const correctOptionLabel = question?.correctOptionLabel || "";
@@ -379,6 +382,9 @@ const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
           <p>
             Topico selecionado: <strong>{topic}</strong>
           </p>
+          <p>
+            Subtopico selecionado: <strong>{subtopic}</strong>
+          </p>
         </div>
 
         <div className="toolbar toolbar--between">
@@ -388,7 +394,7 @@ const Questions = ({ authUser, subject, topic, onBack, onLogout }) => {
           </p>
           <div className="toolbar-group">
             <button type="button" className="secondary-button" onClick={onBack}>
-              Trocar topico
+              Trocar topico e subtopico
             </button>
             <button
               type="button"

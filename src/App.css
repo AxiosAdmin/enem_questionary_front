@@ -533,8 +533,70 @@
   color: var(--input-text);
 }
 
+.form-field textarea,
+.form-field select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--input-background);
+  color: var(--input-text);
+  resize: vertical;
+}
+
+.form-field textarea {
+  min-height: 120px;
+}
+
 .form-field input::placeholder {
   color: var(--input-placeholder);
+}
+
+.form-field textarea::placeholder {
+  color: var(--input-placeholder);
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.question-form {
+  display: grid;
+  gap: 24px;
+}
+
+.question-form-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.question-form-grid--split {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.question-form-section {
+  display: grid;
+  gap: 16px;
+}
+
+.screen-header--compact {
+  margin-bottom: 0;
+}
+
+.screen-header--compact h2 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  color: var(--text-primary);
+}
+
+.question-option-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
 }
 
 .login-button {

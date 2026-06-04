@@ -7,11 +7,13 @@ import {
 } from "../helpers/auth";
 import { getSubjectById } from "../helpers/subjects";
 import Login from "../pages/Login";
+import ManualQuestionCreate from "../pages/ManualQuestionCreate";
 import Questions from "../pages/Questions";
 import Register from "../pages/Register";
 import SubjectsMenu from "../pages/SubjectsMenu";
 import TopicsMenu from "../pages/TopicsMenu";
 import {
+  CREATE_QUESTION_ROUTE,
   LOGIN_ROUTE,
   REGISTER_ROUTE,
   SUBJECTS_ROUTE,
@@ -165,10 +167,26 @@ const AppRouter = ({ theme, onToggleTheme }) => {
           authUser={authUser}
           theme={theme}
           onToggleTheme={onToggleTheme}
+          onCreateQuestion={() => navigate(CREATE_QUESTION_ROUTE)}
           onLogout={handleLogout}
           onSelectSubject={(selectedSubject) =>
             navigate(buildTopicsRoute(selectedSubject.id))
           }
+        />
+      </>
+    );
+  }
+
+  if (route.name === "create-question") {
+    return (
+      <>
+        {sessionExpiredFlag}
+        <ManualQuestionCreate
+          authUser={authUser}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onBack={() => navigate(SUBJECTS_ROUTE)}
+          onLogout={handleLogout}
         />
       </>
     );
@@ -183,8 +201,8 @@ const AppRouter = ({ theme, onToggleTheme }) => {
           subject={subject}
           onBack={() => navigate(SUBJECTS_ROUTE)}
           onLogout={handleLogout}
-          onSelectTopic={(topic) =>
-            navigate(buildQuestionRoute(subject.id, topic))
+          onSelectTopicSelection={({ topic, subtopic }) =>
+            navigate(buildQuestionRoute(subject.id, topic, subtopic))
           }
         />
       </>
@@ -199,6 +217,7 @@ const AppRouter = ({ theme, onToggleTheme }) => {
           authUser={authUser}
           subject={subject}
           topic={route.params.topic}
+          subtopic={route.params.subtopic}
           onBack={() => navigate(buildTopicsRoute(subject.id))}
           onLogout={handleLogout}
         />

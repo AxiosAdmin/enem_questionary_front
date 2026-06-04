@@ -4,6 +4,7 @@ const SubjectsMenu = ({
   authUser,
   theme,
   onToggleTheme,
+  onCreateQuestion,
   onLogout,
   onSelectSubject,
 }) => {
@@ -24,6 +25,9 @@ const SubjectsMenu = ({
             <strong>{authUser?.name || authUser?.nickname || authUser?.email || "Usuario"}</strong>
           </p>
           <div className="toolbar-group">
+            <button type="button" className="primary-button" onClick={onCreateQuestion}>
+              Criar questao manualmente
+            </button>
             <button type="button" className="secondary-button" onClick={onToggleTheme}>
               {theme === "dark" ? "Modo claro" : "Modo escuro"}
             </button>
