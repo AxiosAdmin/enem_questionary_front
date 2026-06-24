@@ -120,6 +120,15 @@ const normalizeString = (value) => {
   return String(value);
 };
 
+const normalizeNumber = (value, fallback = 0) => {
+  if (value === "" || value === undefined || value === null) {
+    return fallback;
+  }
+
+  const candidate = Number(value);
+  return Number.isFinite(candidate) ? candidate : fallback;
+};
+
 const getOptionText = (payload, label) => {
   const lowerLabel = label.toLowerCase();
 
@@ -232,7 +241,7 @@ const resolveCorrectOptionLabel = (options, payload) => {
   return flaggedOption?.label || "";
 };
 
-const normalizeSupportMaterial = (material, index) => {
+export const normalizeSupportMaterial = (material, index) => {
   const rawData =
     material?.data && typeof material.data === "object" && !Array.isArray(material.data)
       ? material.data
@@ -259,6 +268,10 @@ const normalizeSupportMaterial = (material, index) => {
     ),
     storageKey: normalizeString(material?.storage_key || material?.storageKey),
     publicUrl: normalizeString(material?.public_url || material?.publicUrl),
+    fileBase64: normalizeString(material?.file_base64 || material?.fileBase64),
+    imageGenerationPrompt: normalizeString(
+      material?.image_generation_prompt || material?.imageGenerationPrompt,
+    ),
     mimeType: normalizeString(material?.mime_type || material?.mimeType),
     data: rawData,
   };
@@ -274,6 +287,97 @@ const getSupportMaterials = (payload) => {
   return rawSupportMaterials
     .map(normalizeSupportMaterial)
     .sort((first, second) => first.displayOrder - second.displayOrder);
+};
+
+const getRawSupportMaterialsList = (response) => {
+  const payload = getPayload(response);
+
+  return Array.isArray(response)
+    ? response
+    : Array.isArray(payload?.support_materials)
+      ? payload.support_materials
+      : Array.isArray(payload?.supportMaterials)
+        ? payload.supportMaterials
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : Array.isArray(payload?.materials)
+          ? payload.materials
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+};
+
+const getPaginationPayload = (response) => {
+  if (response && typeof response === "object" && !Array.isArray(response)) {
+    return response;
+  }
+
+  return {};
+};
+
+export const normalizeSupportMaterialsResponse = (response) => {
+  const rawSupportMaterials = getRawSupportMaterialsList(response);
+
+  return rawSupportMaterials
+    .map(normalizeSupportMaterial)
+    .sort((first, second) => first.displayOrder - second.displayOrder);
+};
+
+export const normalizeSupportMaterialsPage = (response, options = {}) => {
+  const payload = getPaginationPayload(getPayload(response));
+  const items = normalizeSupportMaterialsResponse(response);
+  const currentPage = Math.max(
+    1,
+    normalizeNumber(
+      pickFirst(payload, ["page", "current_page", "currentPage", "page_number", "pageNumber"]),
+      normalizeNumber(options.fallbackCurrentPage, 1),
+    ),
+  );
+  const itemsPerPage = Math.max(
+    items.length || 1,
+    normalizeNumber(
+      pickFirst(payload, [
+        "items_per_page",
+        "itemsPerPage",
+        "page_size",
+        "pageSize",
+        "per_page",
+        "perPage",
+      ]),
+      normalizeNumber(options.fallbackItemsPerPage, items.length || 1),
+    ),
+  );
+  const totalItems = Math.max(
+    items.length,
+    normalizeNumber(
+      pickFirst(payload, [
+        "total_count",
+        "totalCount",
+        "total_items",
+        "totalItems",
+        "total",
+        "count",
+        ]),
+      items.length,
+    ),
+  );
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalItems / itemsPerPage) || 1,
+  );
+  const hasMore = Boolean(
+    pickFirst(payload, ["has_more", "hasMore"]) === true ||
+      normalizeString(pickFirst(payload, ["has_more", "hasMore"])).toLowerCase() === "true",
+  );
+
+  return {
+    items,
+    currentPage,
+    itemsPerPage,
+    totalItems,
+    totalPages,
+    hasMore,
+  };
 };
 
 export const normalizeQuestion = (response) => {

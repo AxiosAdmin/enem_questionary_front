@@ -1,24 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import SupportMaterialsEditor from "../components/SupportMaterialsEditor";
 import { get, post } from "../helpers/FecthApi";
 import { extractTopicCatalog } from "../helpers/questionAdapter";
+import {
+  buildSupportMaterialsPayload,
+  createSupportMaterialDraft,
+} from "../helpers/supportMaterials";
 import { SUBJECTS, getSubjectById } from "../helpers/subjects";
 
 const ANSWER_LABELS = ["A", "B", "C", "D", "E"];
 
-const createUuid = () => {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
-    const randomValue = Math.floor(Math.random() * 16);
-    const resolvedValue = character === "x" ? randomValue : (randomValue & 0x3) | 0x8;
-    return resolvedValue.toString(16);
-  });
-};
-
 const createInitialFormData = () => ({
-  id: createUuid(),
   topic: "",
   subtopic: "",
   subtopic_description: "",
@@ -45,11 +37,13 @@ const ManualQuestionCreate = ({
   onLogout,
 }) => {
   const routeCreatedAtRef = useRef(new Date().toISOString());
+  const nextSupportMaterialIdRef = useRef(0);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [topicCatalog, setTopicCatalog] = useState([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [topicsError, setTopicsError] = useState("");
   const [formData, setFormData] = useState(createInitialFormData);
+  const [supportMaterials, setSupportMaterials] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -110,9 +104,15 @@ const ManualQuestionCreate = ({
     topicCatalog.find((topicEntry) => topicEntry.topic === formData.topic) || null;
   const availableSubtopics = selectedTopicEntry?.subtopics || [];
 
+  const clearMessages = () => {
+    setError("");
+    setSuccessMessage("");
+  };
+
   const handleFieldChange = (fieldName) => (event) => {
     const { value } = event.target;
 
+    clearMessages();
     setFormData((currentFormData) => ({
       ...currentFormData,
       [fieldName]: value,
@@ -123,11 +123,9 @@ const ManualQuestionCreate = ({
     setSelectedSubjectId(event.target.value);
     setTopicCatalog([]);
     setTopicsError("");
-    setSuccessMessage("");
-    setError("");
+    clearMessages();
     setFormData((currentFormData) => ({
       ...createInitialFormData(),
-      id: currentFormData.id,
       question: currentFormData.question,
       answer_a: currentFormData.answer_a,
       answer_b: currentFormData.answer_b,
@@ -147,8 +145,7 @@ const ManualQuestionCreate = ({
   const handleTopicChange = (event) => {
     const nextTopic = event.target.value;
 
-    setSuccessMessage("");
-    setError("");
+    clearMessages();
     setFormData((currentFormData) => ({
       ...currentFormData,
       topic: nextTopic,
@@ -162,8 +159,7 @@ const ManualQuestionCreate = ({
     const matchedSubtopic =
       availableSubtopics.find((subtopicEntry) => subtopicEntry.name === nextSubtopic) || null;
 
-    setSuccessMessage("");
-    setError("");
+    clearMessages();
     setFormData((currentFormData) => ({
       ...currentFormData,
       subtopic: nextSubtopic,
@@ -171,11 +167,60 @@ const ManualQuestionCreate = ({
     }));
   };
 
+  const addSupportMaterial = (assetType) => {
+    clearMessages();
+    setSupportMaterials((currentMaterials) => [
+      ...currentMaterials,
+      createSupportMaterialDraft(
+        `support-material-${nextSupportMaterialIdRef.current++}`,
+        assetType,
+      ),
+    ]);
+  };
+
+  const updateSupportMaterial = (materialId, fieldName, value) => {
+    clearMessages();
+    setSupportMaterials((currentMaterials) =>
+      currentMaterials.map((material) =>
+        material.id === materialId
+          ? {
+              ...material,
+              [fieldName]: value,
+            }
+          : material,
+      ),
+    );
+  };
+
+  const removeSupportMaterial = (materialId) => {
+    clearMessages();
+    setSupportMaterials((currentMaterials) =>
+      currentMaterials.filter((material) => material.id !== materialId),
+    );
+  };
+
+  const moveSupportMaterial = (materialIndex, direction) => {
+    const nextIndex = materialIndex + direction;
+
+    if (nextIndex < 0 || nextIndex >= supportMaterials.length) {
+      return;
+    }
+
+    clearMessages();
+    setSupportMaterials((currentMaterials) => {
+      const nextMaterials = [...currentMaterials];
+      const [movedMaterial] = nextMaterials.splice(materialIndex, 1);
+      nextMaterials.splice(nextIndex, 0, movedMaterial);
+      return nextMaterials;
+    });
+  };
+
   const handleReset = () => {
     setSelectedSubjectId("");
     setTopicCatalog([]);
     setTopicsError("");
     setFormData(createInitialFormData());
+    setSupportMaterials([]);
     setError("");
     setSuccessMessage("");
   };
@@ -187,18 +232,30 @@ const ManualQuestionCreate = ({
     setSuccessMessage("");
 
     try {
-      await post("questions", {
+      const payload = {
         ...formData,
         created_at: routeCreatedAtRef.current,
-      });
+      };
+      const normalizedSupportMaterials = buildSupportMaterialsPayload(supportMaterials);
+
+      if (normalizedSupportMaterials.length) {
+        payload.support_materials = normalizedSupportMaterials;
+      }
+
+      await post("questions", payload);
 
       setSuccessMessage("Questao criada com sucesso.");
       setSelectedSubjectId("");
       setTopicCatalog([]);
       setTopicsError("");
       setFormData(createInitialFormData());
+      setSupportMaterials([]);
     } catch (requestError) {
-      setError("Nao foi possivel criar a questao. Revise os campos e tente novamente.");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Nao foi possivel criar a questao. Revise os campos e tente novamente.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -227,7 +284,7 @@ const ManualQuestionCreate = ({
             <button type="button" className="secondary-button" onClick={onToggleTheme}>
               {theme === "dark" ? "Modo claro" : "Modo escuro"}
             </button>
-            <button type="button" className="secondary-button" onClick={onLogout}>
+            <button type="button" className="secondary-button bg-danger" onClick={onLogout}>
               Sair
             </button>
           </div>
@@ -238,9 +295,11 @@ const ManualQuestionCreate = ({
             <label className="form-field">
               <span>Materia</span>
               <select value={selectedSubjectId} onChange={handleSubjectChange} required>
-                <option value="">Selecione uma materia</option>
+                <option value="" className="text-dark">
+                  Selecione uma materia
+                </option>
                 {SUBJECTS.map((subjectOption) => (
-                  <option key={subjectOption.id} value={subjectOption.id}>
+                  <option key={subjectOption.id} value={subjectOption.id} className="text-dark">
                     {subjectOption.title}
                   </option>
                 ))}
@@ -255,7 +314,7 @@ const ManualQuestionCreate = ({
                 disabled={!selectedSubjectId || isLoadingTopics || topicCatalog.length === 0}
                 required
               >
-                <option value="">
+                <option value="" className="text-dark">
                   {!selectedSubjectId
                     ? "Selecione uma materia primeiro"
                     : isLoadingTopics
@@ -263,7 +322,7 @@ const ManualQuestionCreate = ({
                       : "Selecione um topico"}
                 </option>
                 {topicCatalog.map((topicEntry) => (
-                  <option key={topicEntry.topic} value={topicEntry.topic}>
+                  <option key={topicEntry.topic} value={topicEntry.topic} className="text-dark">
                     {topicEntry.topic}
                   </option>
                 ))}
@@ -278,11 +337,11 @@ const ManualQuestionCreate = ({
                 disabled={!formData.topic || availableSubtopics.length === 0}
                 required
               >
-                <option value="">
+                <option value="" className="text-dark">
                   {!formData.topic ? "Escolha um topico primeiro" : "Selecione um subtopico"}
                 </option>
                 {availableSubtopics.map((subtopicEntry) => (
-                  <option key={subtopicEntry.name} value={subtopicEntry.name}>
+                  <option key={subtopicEntry.name} value={subtopicEntry.name} className="text-dark">
                     {subtopicEntry.name}
                   </option>
                 ))}
@@ -290,23 +349,12 @@ const ManualQuestionCreate = ({
             </label>
 
             <label className="form-field">
-              <span>ID</span>
-              <input
-                type="text"
-                value={formData.id}
-                onChange={handleFieldChange("id")}
-                placeholder="UUID da questao"
-                required
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Diversity mode</span>
+              <span>Sintese da questao</span>
               <input
                 type="text"
                 value={formData.diversity_mode}
                 onChange={handleFieldChange("diversity_mode")}
-                placeholder="Ex.: balanced"
+                placeholder="Negacao, problema social, contexto historico..."
                 required
               />
             </label>
@@ -319,7 +367,7 @@ const ManualQuestionCreate = ({
                 required
               >
                 {ANSWER_LABELS.map((answerLabel) => (
-                  <option key={answerLabel} value={answerLabel}>
+                  <option key={answerLabel} value={answerLabel} className="text-dark">
                     {answerLabel}
                   </option>
                 ))}
@@ -350,6 +398,14 @@ const ManualQuestionCreate = ({
 
           {isLoadingTopics ? <p className="status-text">Carregando topicos e subtopicos...</p> : null}
           {topicsError ? <p className="status-text status-text--error">{topicsError}</p> : null}
+
+          <SupportMaterialsEditor
+            supportMaterials={supportMaterials}
+            onAddSupportMaterial={addSupportMaterial}
+            onMoveSupportMaterial={moveSupportMaterial}
+            onRemoveSupportMaterial={removeSupportMaterial}
+            onUpdateSupportMaterial={updateSupportMaterial}
+          />
 
           <div className="question-form-section">
             <div className="screen-header screen-header--compact">

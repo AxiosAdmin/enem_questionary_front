@@ -10,9 +10,13 @@ import Login from "../pages/Login";
 import ManualQuestionCreate from "../pages/ManualQuestionCreate";
 import Questions from "../pages/Questions";
 import Register from "../pages/Register";
+import SupportMaterialQuestionCreate from "../pages/SupportMaterialQuestionCreate";
 import SubjectsMenu from "../pages/SubjectsMenu";
+import SupportMaterialsCreate from "../pages/SupportMaterialsCreate";
 import TopicsMenu from "../pages/TopicsMenu";
 import {
+  CREATE_SUPPORT_MATERIAL_QUESTION_ROUTE,
+  CREATE_SUPPORT_MATERIAL_ROUTE,
   CREATE_QUESTION_ROUTE,
   LOGIN_ROUTE,
   REGISTER_ROUTE,
@@ -168,6 +172,10 @@ const AppRouter = ({ theme, onToggleTheme }) => {
           theme={theme}
           onToggleTheme={onToggleTheme}
           onCreateQuestion={() => navigate(CREATE_QUESTION_ROUTE)}
+          onCreateQuestionWithSupportMaterial={() =>
+            navigate(CREATE_SUPPORT_MATERIAL_QUESTION_ROUTE)
+          }
+          onCreateSupportMaterials={() => navigate(CREATE_SUPPORT_MATERIAL_ROUTE)}
           onLogout={handleLogout}
           onSelectSubject={(selectedSubject) =>
             navigate(buildTopicsRoute(selectedSubject.id))
@@ -182,6 +190,36 @@ const AppRouter = ({ theme, onToggleTheme }) => {
       <>
         {sessionExpiredFlag}
         <ManualQuestionCreate
+          authUser={authUser}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onBack={() => navigate(SUBJECTS_ROUTE)}
+          onLogout={handleLogout}
+        />
+      </>
+    );
+  }
+
+  if (route.name === "create-support-material") {
+    return (
+      <>
+        {sessionExpiredFlag}
+        <SupportMaterialsCreate
+          authUser={authUser}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onBack={() => navigate(SUBJECTS_ROUTE)}
+          onLogout={handleLogout}
+        />
+      </>
+    );
+  }
+
+  if (route.name === "create-question-with-support-materials") {
+    return (
+      <>
+        {sessionExpiredFlag}
+        <SupportMaterialQuestionCreate
           authUser={authUser}
           theme={theme}
           onToggleTheme={onToggleTheme}

@@ -2,6 +2,8 @@ export const LOGIN_ROUTE = "/login";
 export const REGISTER_ROUTE = "/register";
 export const SUBJECTS_ROUTE = "/subjects";
 export const CREATE_QUESTION_ROUTE = "/questions";
+export const CREATE_SUPPORT_MATERIAL_ROUTE = "/support-materials";
+export const CREATE_SUPPORT_MATERIAL_QUESTION_ROUTE = "/questions/with-support-materials";
 
 const trimTrailingSlash = (pathname) =>
   pathname !== "/" ? pathname.replace(/\/+$/, "") : pathname;
@@ -33,6 +35,14 @@ export const matchRoute = (pathname) => {
 
   if (normalizedPathname === CREATE_QUESTION_ROUTE) {
     return { name: "create-question", params: {} };
+  }
+
+  if (normalizedPathname === CREATE_SUPPORT_MATERIAL_ROUTE) {
+    return { name: "create-support-material", params: {} };
+  }
+
+  if (normalizedPathname === CREATE_SUPPORT_MATERIAL_QUESTION_ROUTE) {
+    return { name: "create-question-with-support-materials", params: {} };
   }
 
   const topicsMatch = normalizedPathname.match(/^\/subjects\/([^/]+)\/topics$/);

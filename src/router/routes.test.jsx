@@ -19,4 +19,18 @@ describe("question routes", () => {
       },
     });
   });
+
+  test("matches the support materials creation route", () => {
+    expect(matchRoute("/support-materials")).toEqual({
+      name: "create-support-material",
+      params: {},
+    });
+  });
+
+  test("matches the question with support material route", () => {
+    expect(matchRoute("/questions/with-support-materials")).toEqual({
+      name: "create-question-with-support-materials",
+      params: {},
+    });
+  });
 });

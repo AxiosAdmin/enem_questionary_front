@@ -5,6 +5,8 @@ const SubjectsMenu = ({
   theme,
   onToggleTheme,
   onCreateQuestion,
+  onCreateQuestionWithSupportMaterial,
+  onCreateSupportMaterials,
   onLogout,
   onSelectSubject,
 }) => {
@@ -28,10 +30,24 @@ const SubjectsMenu = ({
             <button type="button" className="primary-button" onClick={onCreateQuestion}>
               Criar questao manualmente
             </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onCreateQuestionWithSupportMaterial}
+            >
+              Gerar questao com material
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onCreateSupportMaterials}
+            >
+              Criar materiais de apoio
+            </button>
             <button type="button" className="secondary-button" onClick={onToggleTheme}>
               {theme === "dark" ? "Modo claro" : "Modo escuro"}
             </button>
-            <button type="button" className="secondary-button" onClick={onLogout}>
+            <button type="button" className="secondary-button bg-danger" onClick={onLogout}>
               Sair
             </button>
           </div>

@@ -94,7 +94,7 @@ const TopicsMenu = ({
             <button type="button" className="secondary-button" onClick={onBack}>
               Voltar para materias
             </button>
-            <button type="button" className="secondary-button" onClick={onLogout}>
+            <button type="button" className="secondary-button bg-danger" onClick={onLogout}>
               Sair
             </button>
           </div>
