@@ -1,3 +1,9 @@
+## v0.3.0
+
+- Manual questions creation
+- Support Material creation
+- Questions created based on support material added
+
 ## v0.2.0
 
 - Manual questions creation added
